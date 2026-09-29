@@ -1,7 +1,7 @@
 (() => {
   const ALL = window.YC_UNIVERSE;
   const API = window.YC_API;
-  const CACHE_KEY = "ycf:quotes:v4";
+  const CACHE_KEY = "ycf:quotes:v5";
   const state = { tab: "agro", q: "", quotes: {}, source: "" };
   const $ = (id) => document.getElementById(id);
   const parsePct = (value) => {
@@ -18,6 +18,11 @@
   };
   const money = (row, quote) => {
     if (!quote || !Number.isFinite(quote.price)) return "—";
+    if (row.s === "BTC-BRL") return quote.price.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
+    if (row.s === "BTC-USD") return quote.price.toLocaleString("en-US", { maximumFractionDigits: 0 });
+    if (row.show === "IBOV" || row.show === "SPX" || row.show === "NDX" || row.show === "DJI" || row.show === "NIKKEI" || row.show === "FTSE" || row.show === "DAX") {
+      return quote.price.toLocaleString("en-US", { maximumFractionDigits: 0 });
+    }
     if (row.fmt === "fx") return quote.price.toLocaleString("pt-BR", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
     if (row.fmt === "brl") return quote.price.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     return quote.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -70,6 +75,7 @@
     (market.commodities || []).forEach((row) => {
       if (row.name && row.name.indexOf("Brent") >= 0) put(next, "BZ=F", parseMoney(row.value), row.change);
       if (row.name && row.name.indexOf("Ouro") >= 0) put(next, "GC=F", parseMoney(row.value), row.change);
+      if (row.name && row.name.indexOf("Bitcoin") >= 0) put(next, "BTC-BRL", parseMoney(row.value), row.change);
     });
   }
   function applyCotacoes(payload, next) {
@@ -85,7 +91,8 @@
       "Milho Chicago": "ZC=F",
       "Algodão Chicago": "CT=F",
       "Petróleo Brent": "BZ=F",
-      "Ouro spot": "GC=F"
+      "Ouro spot": "GC=F",
+      Bitcoin: "BTC-BRL"
     };
     (payload.quotes || []).forEach((row) => { if (map[row.name]) put(next, map[row.name], row.value, row.change); });
   }
@@ -131,9 +138,10 @@
     try { applyMercado(await getJson(API + "/api/mercado-live", 14000), next); sources.push("Pirassununga"); } catch (e) {}
     try { applyCotacoes(await getJson(API + "/api/cotacoes-live", 12000), next); if (sources.indexOf("Pirassununga") < 0) sources.push("Cotações"); } catch (e) {}
     try {
-      const fx = await getJson("https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL", 8000);
+      const fx = await getJson("https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL,BTC-BRL", 8000);
       if (fx.USDBRL) put(next, "BRL=X", fx.USDBRL.bid, fx.USDBRL.pctChange);
       if (fx.EURBRL) put(next, "EURBRL=X", fx.EURBRL.bid, fx.EURBRL.pctChange);
+      if (fx.BTCBRL) put(next, "BTC-BRL", fx.BTCBRL.bid, fx.BTCBRL.pctChange);
       sources.push("AwesomeAPI");
     } catch (e) {}
     try {
@@ -142,6 +150,7 @@
       sources.push("Gold-API");
     } catch (e) {}
     await fillMissing(next);
+    if (next["BTC-USD"] && !next["BTC-BRL"] && next["BRL=X"]) put(next, "BTC-BRL", next["BTC-USD"].price * next["BRL=X"].price, next["BTC-USD"].changePct);
     state.quotes = next;
     state.source = sources[0] || "cache";
     writeCache(state.quotes, state.source);
