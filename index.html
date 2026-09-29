@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#071018" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>Yuri Coimbra Finance</title>
+    <link rel="icon" href="logo-yc.svg" />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="splash-on">
+    <div class="splash" id="splash">
+      <img class="splash-mark" src="logo-yc.svg" alt="" />
+      <p>Yuri Coimbra</p>
+      <em>Finance</em>
+    </div>
+    <header class="topbar">
+      <div class="brand">
+        <img src="logo-yc.svg" alt="" />
+        <div><strong>Yuri Coimbra</strong><span>Finance</span></div>
+      </div>
+      <button type="button" id="refresh" class="icon-btn" aria-label="Atualizar">↻</button>
+    </header>
+    <label class="search"><input id="q" type="search" placeholder="Buscar ticker" autocomplete="off" /></label>
+    <nav class="tabs">
+      <button type="button" class="on" data-tab="agro">Agro</button>
+      <button type="button" data-tab="fx">Câmbio</button>
+      <button type="button" data-tab="stocks">Ações</button>
+    </nav>
+    <p class="pulse" id="pulse">Abrindo mesa</p>
+    <main id="list" class="list"></main>
+    <nav class="dock">
+      <button type="button" class="on" data-tab="agro">Favoritos</button>
+      <button type="button" data-tab="agro">Agro</button>
+      <button type="button" data-tab="stocks">Ações</button>
+    </nav>
+    <script src="universe.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
