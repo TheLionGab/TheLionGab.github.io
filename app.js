@@ -1,7 +1,7 @@
 (() => {
   const ALL = window.YC_UNIVERSE;
   const API = window.YC_API;
-  const CACHE_KEY = "ycf:quotes:v7";
+  const CACHE_KEY = "ycf:quotes:v8";
   const state = { tab: "agro", q: "", quotes: {}, source: "" };
   const $ = (id) => document.getElementById(id);
   const SK = (n) => Array.from({length:n}, () => '<div class="sk"></div>').join("");
@@ -56,10 +56,10 @@
     if (!res.ok) throw new Error(String(res.status));
     return res.json();
   }
-  function put(next, symbol, price, changePct) {
+  function put(next, symbol, price, changePct, extra) {
     const px = Number(price);
     if (!symbol || !Number.isFinite(px)) return;
-    next[symbol] = { price: px, changePct: parsePct(changePct) };
+    next[symbol] = Object.assign({ price: px, changePct: parsePct(changePct) }, extra || {});
   }
   function applyMercado(payload, next) {
     const market = payload.market || payload;
@@ -91,6 +91,13 @@
     };
     (payload.quotes || []).forEach((row) => { if (map[row.name]) put(next, map[row.name], row.value, row.change); });
   }
+  function applyFutures(payload, next) {
+    const quotes = (payload && payload.quotes) || {};
+    Object.keys(quotes).forEach((s) => {
+      const q = quotes[s];
+      put(next, s, q.price, q.changePct, q.ref ? { ref: true } : {});
+    });
+  }
   function fillFrontMonth(next) {
     ["CTZ26.NYB", "CTZ27.NYB", "CTZ28.NYB"].forEach((s) => { if (!next[s] && next["CT=F"]) next[s] = Object.assign({}, next["CT=F"], { ref: true }); });
     ["ZSH26.CBT", "ZSH27.CBT", "ZSH28.CBT"].forEach((s) => { if (!next[s] && next["ZS=F"]) next[s] = Object.assign({}, next["ZS=F"], { ref: true }); });
@@ -112,6 +119,7 @@
     const next = Object.assign({}, state.quotes);
     const sources = [];
     const jobs = [
+      getJson("quotes-futures.json?v=8", 8000).then((d) => { applyFutures(d, next); sources.push("Yahoo meses"); }).catch(function(){}),
       getJson(API + "/api/mercado-live", 12000).then((d) => { applyMercado(d, next); sources.push("Pirassununga"); }).catch(function(){}),
       getJson(API + "/api/cotacoes-live", 10000).then((d) => { applyCotacoes(d, next); if (sources.indexOf("Pirassununga") < 0) sources.push("Cotações"); }).catch(function(){}),
       getJson("https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL,BTC-BRL", 8000).then((fx) => {
