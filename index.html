@@ -1,90 +1,42 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#07080a">
-  <title>Yuri Coimbra Finance — Agro, B3, Câmbio e Global</title>
-  <meta name="description" content="Cotações em tempo real de commodities agro, B3, câmbio e mercado global.">
-  <link rel="canonical" href="https://theliongab.github.io/">
-  <link rel="icon" type="image/svg+xml" href="logo-yc.svg">
-  <link rel="preconnect" href="https://painel-fazenda-pirassununga.vercel.app">
-  <link rel="preconnect" href="https://economia.awesomeapi.com.br">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@500;600&family=Manrope:wght@600;800&display=swap" rel="stylesheet">
-  <style>
-    :root{--bg:#07080a;--fg:#e8e8ea;--muted:#8a8a92;--gold:#d4af37;--line:#1a1b1f;--card:#0d0e11;--safe:env(safe-area-inset-bottom,0px)}
-    *{box-sizing:border-box;margin:0;padding:0}
-    html,body{min-height:100%;background:var(--bg);color:var(--fg);font-family:Manrope,system-ui,sans-serif}
-    body{padding-bottom:calc(76px + var(--safe));overflow-x:hidden}
-    .splash{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;z-index:999;transition:opacity .5s,visibility .5s}
-    .splash-mark{width:96px;height:96px}
-    .splash p{font-family:"Archivo Black",sans-serif;font-size:20px;letter-spacing:2px;color:var(--gold)}
-    .splash em{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);font-style:normal;letter-spacing:3px}
-    body:not(.splash-on) .splash{opacity:0;visibility:hidden;pointer-events:none}
-    .topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:calc(12px + env(safe-area-inset-top)) 20px 12px;border-bottom:1px solid var(--line);background:rgba(7,8,10,.94)}
-    .brand{display:flex;align-items:center;gap:10px}
-    .brand svg{width:34px;height:34px}
-    .brand strong{display:block;font-family:"Archivo Black",sans-serif;font-size:14px;letter-spacing:.5px}
-    .brand span{display:block;font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--gold);letter-spacing:2px;text-transform:uppercase}
-    .search{display:block;padding:14px 20px 0}
-    .search input{width:100%;background:var(--card);border:1px solid var(--line);color:var(--fg);padding:12px 14px;border-radius:10px;font-size:14px}
-    .tabs,.dock{display:flex;gap:8px;padding:12px 20px;overflow-x:auto}
-    .tabs button,.dock button{background:transparent;border:1px solid var(--line);color:var(--muted);padding:8px 14px;border-radius:20px;font-size:13px;white-space:nowrap}
-    .tabs button.on,.dock button.on{background:var(--gold);color:#000;border-color:var(--gold);font-weight:700}
-    .pulse{padding:0 20px;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted)}
-    .list{padding:12px 20px 20px;display:flex;flex-direction:column;gap:8px}
-    .row{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
-    .sym{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--gold);font-weight:600}
-    .nm{display:block;font-size:11px;color:var(--muted);margin-top:2px}
-    .px{font-size:15px;font-weight:700;text-align:right}
-    .chg{font-size:12px;font-weight:600;min-width:64px;text-align:right}
-    .up{color:#5ee27a}.down{color:#ff5d5d}.flat{color:var(--muted)}
-    .sk{background:var(--card);border:1px solid var(--line);border-radius:10px;height:64px;position:relative;overflow:hidden}
-    .sk::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(212,175,55,.08),transparent);animation:sk 1.2s infinite}
-    @keyframes sk{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
-    .icon-btn{background:transparent;border:1px solid var(--line);color:var(--gold);width:36px;height:36px;border-radius:10px;font-size:16px}
-    .dock{position:fixed;bottom:0;left:0;right:0;z-index:6;background:rgba(7,8,10,.92);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:10px 12px calc(10px + var(--safe))}
-    .dock button{flex:1;text-align:center}
-  </style>
-</head>
-<body class="splash-on">
-  <div class="splash" id="splash">
-    <svg class="splash-mark" viewBox="0 0 128 128" aria-hidden="true">
-      <rect width="128" height="128" rx="24" fill="#07080a"/>
-      <path d="M28 38 L44 38 L56 58 L68 38 L84 38 L64 72 L64 94 L48 94 L48 72 Z" fill="#D4AF37"/>
-      <path d="M92 38 C108 38 116 48 116 62 C116 78 106 94 88 94 C74 94 66 86 64 76 L80 76 C82 82 86 84 90 84 C98 84 102 78 102 66 C102 54 98 48 90 48 C86 48 82 50 80 56 L64 56 C66 44 76 38 92 38 Z" fill="#D4AF37"/>
-    </svg>
-    <p>YURI COIMBRA</p>
-    <em>FINANCE</em>
-  </div>
-  <header class="topbar">
-    <div class="brand">
-      <svg viewBox="0 0 128 128" aria-hidden="true">
-        <rect width="128" height="128" rx="24" fill="#07080a"/>
-        <path d="M28 38 L44 38 L56 58 L68 38 L84 38 L64 72 L64 94 L48 94 L48 72 Z" fill="#D4AF37"/>
-        <path d="M92 38 C108 38 116 48 116 62 C116 78 106 94 88 94 C74 94 66 86 64 76 L80 76 C82 82 86 84 90 84 C98 84 102 78 102 66 C102 54 98 48 90 48 C86 48 82 50 80 56 L64 56 C66 44 76 38 92 38 Z" fill="#D4AF37"/>
-      </svg>
-      <div><strong>YURI COIMBRA</strong><span>Finance</span></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#07080a" />
+    <title>Yuri Coimbra Finance</title>
+    <link rel="icon" href="logo-yc.svg" />
+    <link rel="stylesheet" href="styles.css?v=7" />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+  </head>
+  <body class="splash-on">
+    <div class="splash" id="splash">
+      <img class="splash-mark" src="logo-yc.svg" alt="YC" />
+      <p>YURI COIMBRA</p>
+      <em>FINANCE</em>
     </div>
-    <button type="button" id="refresh" class="icon-btn" aria-label="Atualizar">↻</button>
-  </header>
-  <label class="search"><input id="q" type="search" placeholder="Buscar ticker" autocomplete="off"></label>
-  <nav class="tabs">
-    <button type="button" class="on" data-tab="agro">Agro</button>
-    <button type="button" data-tab="b3">B3</button>
-    <button type="button" data-tab="global">Global</button>
-    <button type="button" data-tab="fx">Câmbio</button>
-  </nav>
-  <p class="pulse" id="pulse">Carregando cotações…</p>
-  <main id="list" class="list" aria-busy="true"></main>
-  <nav class="dock">
-    <button type="button" class="on" data-tab="agro">Agro</button>
-    <button type="button" data-tab="b3">B3</button>
-    <button type="button" data-tab="global">Global</button>
-  </nav>
-  <script src="universe.js?v=8" defer></script>
-  <script src="app.js?v=8" defer></script>
-</body>
+    <header class="topbar">
+      <div class="brand">
+        <img src="logo-yc.svg" alt="" />
+        <div><strong>YURI COIMBRA</strong><span>Finance</span></div>
+      </div>
+      <button type="button" id="refresh" class="icon-btn" aria-label="Atualizar">↻</button>
+    </header>
+    <label class="search"><input id="q" type="search" placeholder="Buscar ticker" autocomplete="off" /></label>
+    <nav class="tabs">
+      <button type="button" class="on" data-tab="agro">Agro</button>
+      <button type="button" data-tab="b3">B3</button>
+      <button type="button" data-tab="global">Global</button>
+      <button type="button" data-tab="fx">Câmbio</button>
+    </nav>
+    <p class="pulse" id="pulse">Abrindo mesa</p>
+    <main id="list" class="list"></main>
+    <nav class="dock">
+      <button type="button" class="on" data-tab="agro">Agro</button>
+      <button type="button" data-tab="b3">B3</button>
+      <button type="button" data-tab="global">Global</button>
+    </nav>
+    <script src="universe.js?v=7"></script>
+    <script src="app.js?v=7"></script>
+  </body>
 </html>
