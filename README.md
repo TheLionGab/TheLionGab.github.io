@@ -1,2 +1,3 @@
-# TheLionGab.github.io
-Yuri Coimbra Finance
+# Yuri Coimbra Finance
+
+Live: https://theliongab.github.io/index.html
