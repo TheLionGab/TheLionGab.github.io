@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Yuri Coimbra Finance">
-  <rect width="240" height="240" fill="#07080a"/>
-  <text x="118" y="162" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-weight="900" font-size="132" fill="#c9a227" letter-spacing="-14">YC</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="YC">
+  <rect width="128" height="128" rx="24" fill="#07080a"/>
+  <path d="M28 38 L44 38 L56 58 L68 38 L84 38 L64 72 L64 94 L48 94 L48 72 Z" fill="#D4AF37"/>
+  <path d="M92 38 C108 38 116 48 116 62 C116 78 106 94 88 94 C74 94 66 86 64 76 L80 76 C82 82 86 84 90 84 C98 84 102 78 102 66 C102 54 98 48 90 48 C86 48 82 50 80 56 L64 56 C66 44 76 38 92 38 Z" fill="#D4AF37"/>
 </svg>
