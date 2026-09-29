@@ -1,9 +1,10 @@
 (() => {
   const ALL = window.YC_UNIVERSE;
   const API = window.YC_API;
-  const CACHE_KEY = "ycf:quotes:v5";
+  const CACHE_KEY = "ycf:quotes:v6";
   const state = { tab: "agro", q: "", quotes: {}, source: "" };
   const $ = (id) => document.getElementById(id);
+
   const parsePct = (value) => {
     if (typeof value === "number" && Number.isFinite(value)) return value;
     const n = Number(String(value || "").replace("%", "").replace(/\./g, "").replace(",", ".").replace(/[^\d.+-]/g, ""));
@@ -18,9 +19,8 @@
   };
   const money = (row, quote) => {
     if (!quote || !Number.isFinite(quote.price)) return "—";
-    if (row.s === "BTC-BRL") return quote.price.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
-    if (row.s === "BTC-USD") return quote.price.toLocaleString("en-US", { maximumFractionDigits: 0 });
-    if (row.show === "IBOV" || row.show === "SPX" || row.show === "NDX" || row.show === "DJI" || row.show === "NIKKEI" || row.show === "FTSE" || row.show === "DAX") {
+    if (row.s === "BTC-BRL" || row.s === "BTC-USD") return quote.price.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
+    if (String(row.show).match(/^(IBOV|SPX|NDX|DJI|NIKKEI|FTSE|DAX)$/)) {
       return quote.price.toLocaleString("en-US", { maximumFractionDigits: 0 });
     }
     if (row.fmt === "fx") return quote.price.toLocaleString("pt-BR", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
@@ -46,13 +46,15 @@
     document.querySelectorAll("[data-tab]").forEach((btn) => btn.classList.toggle("on", btn.dataset.tab === tab));
     render();
   };
-  const readCache = () => { try { return JSON.parse(localStorage.getItem(CACHE_KEY) || "null"); } catch { return null; } };
-  const writeCache = (quotes, source) => { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ quotes: quotes, source: source, at: Date.now() })); } catch {} };
-  async function getJson(url, timeout) {
-    const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(timeout || 12000) });
-    if (!res.ok) throw new Error(String(res.status));
-    return res.json();
-  }
+  const commit = (next, sources) => {
+    fillFrontMonth(next);
+    state.quotes = next;
+    state.source = sources[0] || "cache";
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ quotes: next, source: state.source, at: Date.now() })); } catch (e) {}
+    const live = Object.keys(next).length;
+    $("pulse").textContent = live ? live + " cotações · " + sources.join(" + ") : "Atualizando mercado";
+    render();
+  };
   function put(next, symbol, price, changePct, extra) {
     const px = Number(price);
     if (!symbol || !Number.isFinite(px)) return;
@@ -60,7 +62,9 @@
   }
   function applyMercado(payload, next) {
     const market = payload.market || payload;
-    [].concat(market.stocks || [], market.swingDesk || []).forEach((stock) => put(next, stock.symbol, stock.price, stock.changeRaw != null ? stock.changeRaw : stock.change));
+    [].concat(market.stocks || [], market.swingDesk || []).forEach((stock) => {
+      put(next, stock.symbol, stock.price != null ? stock.price : parseMoney(stock.value), stock.changeRaw != null ? stock.changeRaw : stock.change);
+    });
     (market.fx || []).forEach((row) => {
       if (row.name.indexOf("Dólar") >= 0) put(next, "BRL=X", parseMoney(row.value), row.change);
       if (row.name === "Euro") put(next, "EURBRL=X", parseMoney(row.value), row.change);
@@ -75,7 +79,9 @@
     (market.commodities || []).forEach((row) => {
       if (row.name && row.name.indexOf("Brent") >= 0) put(next, "BZ=F", parseMoney(row.value), row.change);
       if (row.name && row.name.indexOf("Ouro") >= 0) put(next, "GC=F", parseMoney(row.value), row.change);
-      if (row.name && row.name.indexOf("Bitcoin") >= 0) put(next, "BTC-BRL", parseMoney(row.value), row.change);
+    });
+    (market.macro || []).forEach((row) => {
+      if (row.label === "Brent") put(next, "BZ=F", parseMoney(row.value), null);
     });
   }
   function applyCotacoes(payload, next) {
@@ -97,66 +103,38 @@
     (payload.quotes || []).forEach((row) => { if (map[row.name]) put(next, map[row.name], row.value, row.change); });
   }
   function fillFrontMonth(next) {
-    ["CTZ26.NYB", "CTZ27.NYB", "CTZ28.NYB"].forEach((s) => { if (!next[s] && next["CT=F"]) next[s] = Object.assign({}, next["CT=F"], { ref: true }); });
-    ["ZSH26.CBT", "ZSH27.CBT", "ZSH28.CBT"].forEach((s) => { if (!next[s] && next["ZS=F"]) next[s] = Object.assign({}, next["ZS=F"], { ref: true }); });
-  }
-  async function yahooOne(symbol) {
-    const urls = [
-      "https://query1.finance.yahoo.com/v8/finance/chart/" + encodeURIComponent(symbol) + "?interval=1d&range=5d",
-      "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://query1.finance.yahoo.com/v8/finance/chart/" + symbol + "?interval=1d&range=5d")
-    ];
-    for (let i = 0; i < urls.length; i++) {
-      try {
-        const data = await getJson(urls[i], 8000);
-        const meta = data && data.chart && data.chart.result && data.chart.result[0] && data.chart.result[0].meta;
-        const price = Number(meta && meta.regularMarketPrice);
-        if (!Number.isFinite(price)) continue;
-        const prev = Number(meta.chartPreviousClose || meta.previousClose);
-        return { price: price, changePct: Number.isFinite(prev) && prev ? ((price - prev) / prev) * 100 : null };
-      } catch (e) {}
-    }
-    return null;
-  }
-  async function fillMissing(next) {
-    const queue = ALL.filter((row) => !String(row.s).startsWith("IMEA-") && !next[row.s]);
-    const workers = Array.from({ length: 3 }, async function () {
-      while (queue.length) {
-        const row = queue.shift();
-        const quote = await yahooOne(row.s);
-        if (quote) next[row.s] = quote;
-      }
+    ["CTZ26.NYB", "CTZ27.NYB", "CTZ28.NYB"].forEach((s) => {
+      if (next["CT=F"]) next[s] = Object.assign({}, next["CT=F"], { ref: true });
     });
-    await Promise.all(workers);
-    fillFrontMonth(next);
+    ["ZSH26.CBT", "ZSH27.CBT", "ZSH28.CBT"].forEach((s) => {
+      if (next["ZS=F"]) next[s] = Object.assign({}, next["ZS=F"], { ref: true });
+    });
+  }
+  async function getJson(url, timeout) {
+    const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(timeout || 10000) });
+    if (!res.ok) throw new Error(String(res.status));
+    return res.json();
   }
   async function loadQuotes() {
     $("pulse").textContent = "Atualizando mercado";
-    const cached = readCache();
-    if (cached && cached.quotes) { state.quotes = cached.quotes; state.source = "cache"; render(); }
     const next = Object.assign({}, state.quotes);
     const sources = [];
-    try { applyMercado(await getJson(API + "/api/mercado-live", 14000), next); sources.push("Pirassununga"); } catch (e) {}
-    try { applyCotacoes(await getJson(API + "/api/cotacoes-live", 12000), next); if (sources.indexOf("Pirassununga") < 0) sources.push("Cotações"); } catch (e) {}
-    try {
-      const fx = await getJson("https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL,BTC-BRL", 8000);
-      if (fx.USDBRL) put(next, "BRL=X", fx.USDBRL.bid, fx.USDBRL.pctChange);
-      if (fx.EURBRL) put(next, "EURBRL=X", fx.EURBRL.bid, fx.EURBRL.pctChange);
-      if (fx.BTCBRL) put(next, "BTC-BRL", fx.BTCBRL.bid, fx.BTCBRL.pctChange);
-      sources.push("AwesomeAPI");
-    } catch (e) {}
-    try {
-      const gold = await getJson("https://api.gold-api.com/price/XAU", 8000);
-      if (gold && gold.price) put(next, "GC=F", gold.price, null);
-      sources.push("Gold-API");
-    } catch (e) {}
-    await fillMissing(next);
-    if (next["BTC-USD"] && !next["BTC-BRL"] && next["BRL=X"]) put(next, "BTC-BRL", next["BTC-USD"].price * next["BRL=X"].price, next["BTC-USD"].changePct);
-    state.quotes = next;
-    state.source = sources[0] || "cache";
-    writeCache(state.quotes, state.source);
-    const live = Object.keys(state.quotes).length;
-    $("pulse").textContent = live ? live + " cotações · " + sources.join(" + ") : "Offline · lista pronta";
-    render();
+    const jobs = [
+      getJson(API + "/api/mercado-live", 12000).then((data) => { applyMercado(data, next); sources.push("Pirassununga"); }).catch(function () {}),
+      getJson(API + "/api/cotacoes-live", 10000).then((data) => { applyCotacoes(data, next); if (sources.indexOf("Pirassununga") < 0) sources.push("Cotações"); }).catch(function () {}),
+      getJson("https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL,BTC-BRL", 8000).then((fx) => {
+        if (fx.USDBRL) put(next, "BRL=X", fx.USDBRL.bid, fx.USDBRL.pctChange);
+        if (fx.EURBRL) put(next, "EURBRL=X", fx.EURBRL.bid, fx.EURBRL.pctChange);
+        if (fx.BTCBRL) put(next, "BTC-BRL", fx.BTCBRL.bid, fx.BTCBRL.pctChange);
+        sources.push("AwesomeAPI");
+      }).catch(function () {}),
+      getJson("https://api.gold-api.com/price/XAU", 8000).then((gold) => {
+        if (gold && gold.price) put(next, "GC=F", gold.price, null);
+        sources.push("Gold-API");
+      }).catch(function () {})
+    ];
+    await Promise.all(jobs);
+    commit(next, sources);
   }
   document.addEventListener("click", (event) => {
     const tab = event.target.closest("[data-tab]");
@@ -164,7 +142,11 @@
   });
   $("q").addEventListener("input", (e) => { state.q = e.target.value; render(); });
   $("refresh").addEventListener("click", loadQuotes);
+  try {
+    const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+    if (cached && cached.quotes) { state.quotes = cached.quotes; render(); }
+  } catch (e) {}
   render();
   loadQuotes();
-  setTimeout(() => document.body.classList.remove("splash-on"), 1100);
+  setTimeout(() => document.body.classList.remove("splash-on"), 900);
 })();
