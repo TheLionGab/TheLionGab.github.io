@@ -7,7 +7,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <title>Yuri Coimbra Finance</title>
     <link rel="icon" href="logo-yc.svg" />
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="preconnect" href="https://painel-fazenda-pirassununga.vercel.app" />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Instrument+Serif:ital@0;1&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body class="splash-on">
@@ -26,15 +27,16 @@
     <label class="search"><input id="q" type="search" placeholder="Buscar ticker" autocomplete="off" /></label>
     <nav class="tabs">
       <button type="button" class="on" data-tab="agro">Agro</button>
+      <button type="button" data-tab="b3">B3</button>
+      <button type="button" data-tab="global">Global</button>
       <button type="button" data-tab="fx">Câmbio</button>
-      <button type="button" data-tab="stocks">Ações</button>
     </nav>
     <p class="pulse" id="pulse">Abrindo mesa</p>
     <main id="list" class="list"></main>
     <nav class="dock">
-      <button type="button" class="on" data-tab="agro">Favoritos</button>
-      <button type="button" data-tab="agro">Agro</button>
-      <button type="button" data-tab="stocks">Ações</button>
+      <button type="button" class="on" data-tab="agro">Agro</button>
+      <button type="button" data-tab="b3">B3</button>
+      <button type="button" data-tab="global">Global</button>
     </nav>
     <script src="universe.js"></script>
     <script src="app.js"></script>
