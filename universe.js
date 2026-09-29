@@ -1,4 +1,5 @@
 window.YC_API = "https://painel-fazenda-pirassununga.vercel.app";
+window.YC_EDGE = "https://yc-finance-api.vercel.app";
 window.YC_UNIVERSE = [
   { s: "BTC-BRL", show: "BTC", n: "Bitcoin / Real", tab: "fx", group: "Cripto", q: 110, fmt: "brl" },
   { s: "BTC-USD", show: "BTCUSD", n: "Bitcoin / Dólar", tab: "fx", group: "Cripto", q: 109, fmt: "usd" },
