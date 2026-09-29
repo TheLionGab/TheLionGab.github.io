@@ -79,27 +79,22 @@
   }
 
   async function yahooOne(symbol) {
-    const urls = [
-      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d`,
-      `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`)}
-    ];
-    for (const url of urls) {
-      try {
-        const data = await getJson(url, 9000);
-        const meta = data?.chart?.result?.[0]?.meta;
-        const price = Number(meta?.regularMarketPrice);
-        if (!Number.isFinite(price)) continue;
-        const prev = Number(meta.chartPreviousClose || meta.previousClose);
-        const changePct = Number.isFinite(prev) && prev ? ((price - prev) / prev) * 100 : null;
-        return { price, changePct };
-      } catch {}
+    try {
+      const data = await getJson("https://query1.finance.yahoo.com/v8/finance/chart/" + encodeURIComponent(symbol) + "?interval=1d&range=5d", 9000);
+      const meta = data && data.chart && data.chart.result && data.chart.result[0] && data.chart.result[0].meta;
+      const price = Number(meta && meta.regularMarketPrice);
+      if (!Number.isFinite(price)) return null;
+      const prev = Number(meta.chartPreviousClose || meta.previousClose);
+      const changePct = Number.isFinite(prev) && prev ? ((price - prev) / prev) * 100 : null;
+      return { price, changePct };
+    } catch {
+      return null;
     }
-    return null;
   }
 
   async function fillMissing(quotes) {
     const queue = ALL.filter((row) => !row.s.startsWith("IMEA-") && !quotes[row.s]);
-    const workers = Array.from({ length: 4 }, async () => {
+    const workers = Array.from({ length: 3 }, async () => {
       while (queue.length) {
         const row = queue.shift();
         const quote = await yahooOne(row.s);
@@ -113,22 +108,22 @@
   async function loadQuotes() {
     $("pulse").textContent = "Atualizando mercado";
     const cached = readCache();
-    if (cached?.quotes) {
+    if (cached && cached.quotes) {
       state.quotes = cached.quotes;
       state.source = "cache";
       render();
     }
     try {
-      const mercado = await getJson(`${API}/api/mercado-live`, 14000);
+      const mercado = await getJson(API + "/api/mercado-live", 14000);
       state.quotes = applyPirassununga(mercado);
       state.source = "Pirassununga";
     } catch {
       state.source = state.source || "Yahoo";
     }
-    state.quotes = await fillMissing({ ...state.quotes });
+    state.quotes = await fillMissing(Object.assign({}, state.quotes));
     writeCache(state.quotes, state.source);
     const live = Object.keys(state.quotes).length;
-    $("pulse").textContent = live ? `${live} cotações · ${state.source}` : "Offline · lista pronta";
+    $("pulse").textContent = live ? (live + " cotações · " + state.source) : "Offline · lista pronta";
     render();
   }
 
