@@ -1,7 +1,7 @@
 (() => {
   const ALL = window.YC_UNIVERSE;
   const API = window.YC_API;
-  const CACHE_KEY = "ycf:quotes:v3";
+  const CACHE_KEY = "ycf:quotes:v4";
   const state = { tab: "agro", q: "", quotes: {}, source: "" };
   const $ = (id) => document.getElementById(id);
   const parsePct = (value) => {
@@ -24,7 +24,7 @@
   };
   const filtered = () => {
     const q = state.q.trim().toLowerCase();
-    return ALL.filter((row) => row.tab === state.tab && (!q || (row.show + " " + row.n + " " + row.group).toLowerCase().includes(q))).sort((a, b) => b.q - a.q);
+    return ALL.filter((row) => row.tab === state.tab && (!q || (row.show + " " + row.n).toLowerCase().includes(q))).sort((a, b) => b.q - a.q);
   };
   const render = () => {
     $("list").innerHTML = filtered().map((row) => {
@@ -48,16 +48,16 @@
     if (!res.ok) throw new Error(String(res.status));
     return res.json();
   }
-  function put(next, symbol, price, changePct) {
+  function put(next, symbol, price, changePct, extra) {
     const px = Number(price);
     if (!symbol || !Number.isFinite(px)) return;
-    next[symbol] = { price: px, changePct: parsePct(changePct) };
+    next[symbol] = Object.assign({ price: px, changePct: parsePct(changePct) }, extra || {});
   }
   function applyMercado(payload, next) {
     const market = payload.market || payload;
     [].concat(market.stocks || [], market.swingDesk || []).forEach((stock) => put(next, stock.symbol, stock.price, stock.changeRaw != null ? stock.changeRaw : stock.change));
     (market.fx || []).forEach((row) => {
-      if (row.name === "Dólar mercado" || row.name === "Dólar PTAX") put(next, "BRL=X", parseMoney(row.value), row.change);
+      if (row.name.indexOf("Dólar") >= 0) put(next, "BRL=X", parseMoney(row.value), row.change);
       if (row.name === "Euro") put(next, "EURBRL=X", parseMoney(row.value), row.change);
     });
     (market.chicago || []).forEach((row) => {
@@ -67,6 +67,10 @@
     });
     const local = { Soja: "IMEA-SOJA", Milho: "IMEA-MILHO", "Algodão pluma": "IMEA-ALGODAO", "Boi gordo": "IMEA-BOI" };
     (market.agroLocal || []).forEach((row) => { if (local[row.name]) put(next, local[row.name], parseMoney(row.value), row.change); });
+    (market.commodities || []).forEach((row) => {
+      if (row.name && row.name.indexOf("Brent") >= 0) put(next, "BZ=F", parseMoney(row.value), row.change);
+      if (row.name && row.name.indexOf("Ouro") >= 0) put(next, "GC=F", parseMoney(row.value), row.change);
+    });
   }
   function applyCotacoes(payload, next) {
     const map = {
@@ -79,13 +83,44 @@
       Euro: "EURBRL=X",
       "Soja Chicago": "ZS=F",
       "Milho Chicago": "ZC=F",
-      "Algodão Chicago": "CT=F"
+      "Algodão Chicago": "CT=F",
+      "Petróleo Brent": "BZ=F",
+      "Ouro spot": "GC=F"
     };
     (payload.quotes || []).forEach((row) => { if (map[row.name]) put(next, map[row.name], row.value, row.change); });
   }
   function fillFrontMonth(next) {
     ["CTZ26.NYB", "CTZ27.NYB", "CTZ28.NYB"].forEach((s) => { if (!next[s] && next["CT=F"]) next[s] = Object.assign({}, next["CT=F"], { ref: true }); });
     ["ZSH26.CBT", "ZSH27.CBT", "ZSH28.CBT"].forEach((s) => { if (!next[s] && next["ZS=F"]) next[s] = Object.assign({}, next["ZS=F"], { ref: true }); });
+  }
+  async function yahooOne(symbol) {
+    const urls = [
+      "https://query1.finance.yahoo.com/v8/finance/chart/" + encodeURIComponent(symbol) + "?interval=1d&range=5d",
+      "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://query1.finance.yahoo.com/v8/finance/chart/" + symbol + "?interval=1d&range=5d")
+    ];
+    for (let i = 0; i < urls.length; i++) {
+      try {
+        const data = await getJson(urls[i], 8000);
+        const meta = data && data.chart && data.chart.result && data.chart.result[0] && data.chart.result[0].meta;
+        const price = Number(meta && meta.regularMarketPrice);
+        if (!Number.isFinite(price)) continue;
+        const prev = Number(meta.chartPreviousClose || meta.previousClose);
+        return { price: price, changePct: Number.isFinite(prev) && prev ? ((price - prev) / prev) * 100 : null };
+      } catch (e) {}
+    }
+    return null;
+  }
+  async function fillMissing(next) {
+    const queue = ALL.filter((row) => !String(row.s).startsWith("IMEA-") && !next[row.s]);
+    const workers = Array.from({ length: 3 }, async function () {
+      while (queue.length) {
+        const row = queue.shift();
+        const quote = await yahooOne(row.s);
+        if (quote) next[row.s] = quote;
+      }
+    });
+    await Promise.all(workers);
+    fillFrontMonth(next);
   }
   async function loadQuotes() {
     $("pulse").textContent = "Atualizando mercado";
@@ -101,7 +136,12 @@
       if (fx.EURBRL) put(next, "EURBRL=X", fx.EURBRL.bid, fx.EURBRL.pctChange);
       sources.push("AwesomeAPI");
     } catch (e) {}
-    fillFrontMonth(next);
+    try {
+      const gold = await getJson("https://api.gold-api.com/price/XAU", 8000);
+      if (gold && gold.price) put(next, "GC=F", gold.price, null);
+      sources.push("Gold-API");
+    } catch (e) {}
+    await fillMissing(next);
     state.quotes = next;
     state.source = sources[0] || "cache";
     writeCache(state.quotes, state.source);
