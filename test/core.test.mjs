@@ -143,6 +143,9 @@ test("universo: câmbio segue o dia brasileiro (AwesomeAPI primeiro); soja e mil
   assert.deepEqual(Array.from(by["EURBRL=X"].src), ["awesome", "edge"]);
   for (const s of ["ZSX26.CBT", "ZSH27.CBT", "ZSH28.CBT", "ZCZ26.CBT"]) assert.equal(by[s].u, "¢/bu", s);
   for (const s of ["CTZ26.NYB", "CTZ27.NYB", "CTZ28.NYB"]) assert.equal(by[s].u, "¢/lb", s);
+  for (const s of ["ZWZ26.CBT", "ZWH27.CBT"]) assert.equal(by[s].u, "¢/bu", s);
+  for (const s of ["ZLZ26.CBT", "ZLH27.CBT"]) assert.equal(by[s].u, "¢/lb", s);
+  for (const s of ["ZMZ26.CBT", "ZMH27.CBT"]) assert.equal(by[s].u, "US$/t curta", s);
 });
 
 test("universo: Nasdaq Composite com rótulo certo e cripto marcada como 24 h", () => {
@@ -157,7 +160,9 @@ const inTab = (tab) => win.YC_UNIVERSE.filter((r) => C.inTab(r, tab));
 test("abas: as quatro têm linhas; Chicago é o painel CBOT, contido em Grãos", () => {
   for (const t of TABS) assert.ok(inTab(t).length > 0, t);
   const chicago = inTab("chicago");
-  assert.deepEqual(Array.from(chicago.map((r) => r.s).sort()), ["ZCZ26.CBT", "ZSH27.CBT", "ZSH28.CBT", "ZSX26.CBT"]);
+  assert.deepEqual(Array.from(chicago.map((r) => r.s).sort()), [
+    "ZCZ26.CBT", "ZLH27.CBT", "ZLZ26.CBT", "ZMH27.CBT", "ZMZ26.CBT", "ZSH27.CBT", "ZSH28.CBT", "ZSX26.CBT", "ZWH27.CBT", "ZWZ26.CBT"
+  ]);
   for (const r of chicago) assert.ok(C.inTab(r, "graos"), r.s);
   assert.ok(win.YC_UNIVERSE.filter((r) => r.tabs.length > 1).every((r) => r.s.endsWith(".CBT")));
 });
@@ -179,7 +184,7 @@ test("index.html: assets com a mesma versão, para o cache não misturar arquivo
 
 test("sections: grupos na ordem do maior q, linhas por q, sem grupo repetido", () => {
   const secs = C.sections(inTab("graos"));
-  assert.deepEqual(Array.from(secs.map((s) => s.group)), ["Algodão", "Soja", "Milho", "Energia"]);
+  assert.deepEqual(Array.from(secs.map((s) => s.group)), ["Algodão", "Soja", "Milho", "Trigo", "Farelo de soja", "Óleo de soja", "Energia"]);
   assert.deepEqual(Array.from(secs[1].rows.map((r) => r.show)), ["ZSX26", "ZSH27", "ZSH28"]);
   const all = C.sections(win.YC_UNIVERSE);
   assert.equal(new Set(all.map((s) => s.group)).size, all.length);
@@ -241,4 +246,19 @@ test("ícones e prévia: tamanhos declarados batem com o PNG real", () => {
   assert.match(html, /og:image:height" content="630"/);
   assert.match(html, /rel="manifest" href="manifest\.webmanifest"/);
   assert.match(html, /rel="apple-touch-icon" href="apple-touch-icon\.png"/);
+});
+
+const MES = { F: "Jan", G: "Fev", H: "Mar", J: "Abr", K: "Mai", M: "Jun", N: "Jul", Q: "Ago", U: "Set", V: "Out", X: "Nov", Z: "Dez" };
+const PRODUTO = { CT: "Algodão", ZS: "Soja", ZC: "Milho", ZW: "Trigo", ZM: "Farelo de soja", ZL: "Óleo de soja" };
+
+test("universo: contratos agrícolas com nome de produto e mês iguais ao símbolo, dec 2 e grupo do produto", () => {
+  const ag = win.YC_UNIVERSE.filter((r) => /\.(NYB|CBT)$/.test(r.s));
+  assert.equal(ag.length, 13);
+  for (const r of ag) {
+    const m = r.s.match(/^(CT|ZS|ZC|ZW|ZM|ZL)([FGHJKMNQUVXZ])(\d{2})\.(NYB|CBT)$/);
+    assert.ok(m, "símbolo fora do padrão: " + r.s);
+    assert.equal(r.n, PRODUTO[m[1]] + " " + MES[m[2]] + "/" + m[3], r.s);
+    assert.equal(r.group, PRODUTO[m[1]], r.s);
+    assert.equal(r.dec, 2, r.s);
+  }
 });
