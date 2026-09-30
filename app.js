@@ -55,7 +55,7 @@
     state.loading = true;
     pulse("Atualizando mercado");
     const [edge, awesome] = await Promise.allSettled([
-      getJson(EDGE + "/api/quotes?group=all", 15000),
+      getJson(EDGE + "/api/quotes?group=all", 25000),
       getJson(AWESOME, 8000)
     ]);
     // Fonte que respondeu substitui o mapa inteiro: símbolo que ela não trouxe
