@@ -72,4 +72,5 @@ body:not(.splash-on) .splash { opacity: 0; visibility: hidden; pointer-events: n
 }
 @media (min-width: 760px) {
   body { max-width: 430px; margin: 0 auto; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+  .dock { left: 50%; right: auto; width: 430px; transform: translateX(-50%); }
 }

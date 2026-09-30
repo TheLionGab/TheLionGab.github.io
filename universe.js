@@ -12,7 +12,7 @@ window.YC_UNIVERSE = [
   { s: "ZSH27.CBT", show: "ZSH27", n: "Soja Mar/27", tab: "agro", group: "Soja", q: 95, dec: 2, u: "US$/bu" },
   { s: "ZSH28.CBT", show: "ZSH28", n: "Soja Mar/28", tab: "agro", group: "Soja", q: 94, dec: 2, u: "US$/bu" },
   { s: "ZCZ26.CBT", show: "ZCZ26", n: "Milho Dez/26", tab: "agro", group: "Milho", q: 93, dec: 2, u: "US$/bu" },
-  { s: "BZ=F", show: "BRENT", n: "Petróleo Brent · 1º venc.", tab: "agro", group: "Energia", q: 81, dec: 2, u: "US$/bbl" },
+  { s: "BZ=F", show: "BRENT", n: "Brent · 1º venc.", tab: "agro", group: "Energia", q: 81, dec: 2, u: "US$/bbl" },
   { s: "ITUB4.SA", show: "ITUB4", n: "Itaú", tab: "b3", group: "Bancos", q: 79, dec: 2, u: "R$" },
   { s: "BBDC4.SA", show: "BBDC4", n: "Bradesco", tab: "b3", group: "Bancos", q: 78, dec: 2, u: "R$" },
   { s: "BBAS3.SA", show: "BBAS3", n: "Banco do Brasil", tab: "b3", group: "Bancos", q: 77, dec: 2, u: "R$" },
