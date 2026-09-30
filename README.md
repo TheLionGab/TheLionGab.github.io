@@ -6,8 +6,9 @@ Mesa de cotações estática (GitHub Pages), sem build.
 
 Abas (menu único, embaixo): Grãos, Ações, Câmbio e Chicago. Cada aba se
 divide em grupos por mercado, com título dourado ("Soja", "B3 · Bancos e
-bolsa", "EUA · Big techs"). Chicago é o painel CBOT (soja e milho); essas
-4 linhas também aparecem em Grãos, junto de algodão e Brent.
+bolsa", "EUA · Big techs"). Chicago é o painel CBOT (soja, milho, trigo,
+farelo e óleo de soja); essas linhas também aparecem em Grãos, junto de
+algodão e Brent.
 
 Em `universe.js`, cada linha tem:
 
