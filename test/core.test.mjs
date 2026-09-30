@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import vm from "node:vm";
 
 const require = createRequire(import.meta.url);
@@ -211,4 +211,34 @@ test("esc: a busca digitada não vira HTML", () => {
   assert.equal(C.esc("<img src=x onerror=alert(1)>"), "&#60;img src=x onerror=alert(1)&#62;");
   assert.equal(C.esc("a&b\"c'd"), "a&#38;b&#34;c&#39;d");
   assert.equal(C.esc(123), "123");
+});
+
+const here = (p) => new URL("../" + p, import.meta.url);
+
+// Largura e altura no cabeçalho IHDR do PNG; barra arquivo que não é PNG.
+function pngSize(path) {
+  const b = readFileSync(here(path));
+  assert.equal(b.subarray(0, 8).toString("hex"), "89504e470d0a1a0a", path + " não é PNG");
+  return b.readUInt32BE(16) + "x" + b.readUInt32BE(20);
+}
+
+test("index.html: todo arquivo local citado existe, sem link quebrado", () => {
+  const html = readFileSync(here("index.html"), "utf8");
+  const local = [...html.matchAll(/(?:href|src)="([^"#?]+)(?:\?[^"]*)?"/g)].map((m) => m[1]).filter((p) => !/^(https?:)?\/\//.test(p));
+  assert.ok(local.length >= 7, "esperava ao menos 7 arquivos locais, achei " + local.length);
+  for (const p of local) assert.ok(existsSync(here(p)), "falta o arquivo: " + p);
+});
+
+test("ícones e prévia: tamanhos declarados batem com o PNG real", () => {
+  assert.equal(pngSize("apple-touch-icon.png"), "180x180");
+  assert.equal(pngSize("og.png"), "1200x630");
+  const manifest = JSON.parse(readFileSync(here("manifest.webmanifest"), "utf8"));
+  assert.ok(manifest.icons.length >= 3);
+  for (const icon of manifest.icons) assert.equal(pngSize(icon.src), icon.sizes, icon.src);
+  assert.ok(manifest.icons.some((i) => i.purpose === "maskable"));
+  const html = readFileSync(here("index.html"), "utf8");
+  assert.match(html, /og:image:width" content="1200"/);
+  assert.match(html, /og:image:height" content="630"/);
+  assert.match(html, /rel="manifest" href="manifest\.webmanifest"/);
+  assert.match(html, /rel="apple-touch-icon" href="apple-touch-icon\.png"/);
 });

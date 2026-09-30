@@ -37,6 +37,9 @@ Regras:
 - Variação acima de 40% no dia é tratada como erro de leitura ("—").
 - Sob o preço vai a hora (Brasília) da cotação, ou dd/mm se não é de hoje.
 - Contrato vencido sai do `universe.js`; o teste barra símbolo repetido.
+- `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`
+  e `og.png` são PNG gerados do `logo-yc.svg` (WhatsApp e iOS não aceitam
+  SVG). O teste confere que o tamanho declarado bate com o arquivo.
 - O `?v=N` dos quatro assets em `index.html` é o mesmo número; subir
   junto ao mudar qualquer asset (o teste barra versões diferentes).
 
