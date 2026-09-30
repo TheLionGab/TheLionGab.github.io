@@ -90,5 +90,39 @@
     return !!row.h24 && (now === undefined ? Date.now() : now) - quote.ts > 3600000;
   }
 
-  return { sanePct, fmtPrice, fmtPct, pctClass, stamp, fromEdge, fromAwesome, pick, isOld, MAX_DAILY_PCT };
+  // Único texto que não vem do universo é a busca digitada: entra no HTML escapado.
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, (c) => "&#" + c.charCodeAt(0) + ";");
+  }
+
+  // Uma linha pode aparecer em mais de uma aba (soja: Grãos e Chicago).
+  function inTab(row, tab) {
+    return (row.tabs || []).indexOf(tab) !== -1;
+  }
+
+  // Sem acento e sem caixa: "algodao" acha "Algodão".
+  function fold(s) {
+    return String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  }
+
+  function matches(row, q) {
+    return fold(row.show + " " + row.n + " " + row.group).indexOf(fold(q.trim())) !== -1;
+  }
+
+  // Seções na ordem do maior `q` de cada grupo; linhas por `q` decrescente.
+  // O rótulo do grupo é único no universo, então é a chave.
+  function sections(rows) {
+    const byGroup = {};
+    const out = [];
+    rows.slice().sort((a, b) => b.q - a.q).forEach((row) => {
+      if (!byGroup[row.group]) {
+        byGroup[row.group] = { group: row.group, rows: [] };
+        out.push(byGroup[row.group]);
+      }
+      byGroup[row.group].rows.push(row);
+    });
+    return out;
+  }
+
+  return { sanePct, fmtPrice, fmtPct, pctClass, stamp, fromEdge, fromAwesome, pick, isOld, esc, inTab, fold, matches, sections, MAX_DAILY_PCT };
 });

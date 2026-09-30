@@ -4,41 +4,47 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#07080a" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="description" content="Mesa de cotações: soja, milho e algodão, ações da B3 e dos EUA, dólar, euro, bitcoin, ouro e o painel de Chicago." />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:title" content="Yuri Coimbra Finance" />
+    <meta property="og:description" content="Grãos, ações, câmbio e Chicago numa tela só." />
     <title>Yuri Coimbra Finance</title>
-    <link rel="icon" href="logo-yc.svg" />
-    <link rel="stylesheet" href="styles.css?v=8" />
+    <link rel="icon" href="logo-yc.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://yc-finance-api.vercel.app" crossorigin />
+    <link rel="preconnect" href="https://economia.awesomeapi.com.br" crossorigin />
+    <link rel="stylesheet" href="styles.css?v=9" />
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
   </head>
   <body class="splash-on">
-    <div class="splash" id="splash">
-      <img class="splash-mark" src="logo-yc.svg" alt="YC" />
+    <div class="splash" id="splash" aria-hidden="true">
+      <img class="splash-mark" src="logo-yc.svg" alt="" />
       <p>YURI COIMBRA</p>
       <em>FINANCE</em>
     </div>
     <header class="topbar">
       <div class="brand">
         <img src="logo-yc.svg" alt="" />
-        <div><strong>YURI COIMBRA</strong><span>Finance</span></div>
+        <div><h1>YURI COIMBRA</h1><span>Finance</span></div>
       </div>
-      <button type="button" id="refresh" class="icon-btn" aria-label="Atualizar">↻</button>
+      <button type="button" id="refresh" class="icon-btn" aria-label="Atualizar cotações">↻</button>
     </header>
-    <label class="search"><input id="q" type="search" placeholder="Buscar ticker" autocomplete="off" /></label>
-    <nav class="tabs">
-      <button type="button" class="on" data-tab="agro">Agro</button>
-      <button type="button" data-tab="b3">B3</button>
-      <button type="button" data-tab="global">Global</button>
-      <button type="button" data-tab="fx">Câmbio</button>
-    </nav>
+    <div class="search">
+      <input id="q" type="search" placeholder="Buscar ticker ou nome" aria-label="Buscar ativo por ticker ou nome" autocomplete="off" enterkeyhint="search" />
+    </div>
     <p class="pulse" id="pulse">Abrindo mesa</p>
     <main id="list" class="list"></main>
-    <nav class="dock">
-      <button type="button" class="on" data-tab="agro">Agro</button>
-      <button type="button" data-tab="b3">B3</button>
-      <button type="button" data-tab="global">Global</button>
+    <nav class="dock" aria-label="Mercados">
+      <button type="button" class="on" data-tab="graos" aria-current="true">Grãos</button>
+      <button type="button" data-tab="acoes">Ações</button>
       <button type="button" data-tab="fx">Câmbio</button>
+      <button type="button" data-tab="chicago">Chicago</button>
     </nav>
-    <script src="universe.js?v=8"></script>
-    <script src="quotes-core.js?v=8"></script>
-    <script src="app.js?v=8"></script>
+    <script src="universe.js?v=9"></script>
+    <script src="quotes-core.js?v=9"></script>
+    <script src="app.js?v=9"></script>
   </body>
 </html>

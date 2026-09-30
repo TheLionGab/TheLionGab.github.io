@@ -106,11 +106,14 @@ test("isOld: contrato parado, fonte fora do ar e cripto com cotação de mais de
   assert.equal(C.isOld({}, { src: "edge", ts: now - 86400000 * 3 }, { edge: true }, now), false);
 });
 
+const TABS = ["graos", "acoes", "fx", "chicago"];
+
 test("universo: símbolos únicos, abas válidas, fontes só edge/awesome", () => {
   const u = win.YC_UNIVERSE;
   assert.equal(new Set(u.map((r) => r.s)).size, u.length);
   for (const r of u) {
-    assert.ok(["agro", "b3", "global", "fx"].includes(r.tab), r.s);
+    assert.ok(r.tabs.length > 0 && r.tabs.every((t) => TABS.includes(t)), r.s);
+    assert.ok(r.group, r.s);
     assert.ok(Number.isInteger(r.dec) && r.dec >= 0 && r.dec <= 4, r.s);
     assert.ok(r.u && r.n && r.show, r.s);
     for (const s of r.src || ["edge"]) assert.ok(["edge", "awesome"].includes(s), r.s);
@@ -138,4 +141,65 @@ test("universo: Nasdaq Composite com rótulo certo e cripto marcada como 24 h", 
   assert.equal(by["^IXIC"].show, "IXIC");
   assert.equal(by["BTC-BRL"].h24, true);
   assert.equal(by["BTC-USD"].h24, true);
+});
+
+const inTab = (tab) => win.YC_UNIVERSE.filter((r) => C.inTab(r, tab));
+
+test("abas: as quatro têm linhas; Chicago é o painel CBOT, contido em Grãos", () => {
+  for (const t of TABS) assert.ok(inTab(t).length > 0, t);
+  const chicago = inTab("chicago");
+  assert.deepEqual(Array.from(chicago.map((r) => r.s).sort()), ["ZCZ26.CBT", "ZSH27.CBT", "ZSH28.CBT", "ZSX26.CBT"]);
+  for (const r of chicago) assert.ok(C.inTab(r, "graos"), r.s);
+  assert.ok(win.YC_UNIVERSE.filter((r) => r.tabs.length > 1).every((r) => r.s.endsWith(".CBT")));
+});
+
+test("index.html: um só menu, com as mesmas abas do universo e na ordem combinada", () => {
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  assert.deepEqual([...html.matchAll(/data-tab="(\w+)"/g)].map((m) => m[1]), TABS);
+  assert.equal((html.match(/<nav/g) || []).length, 1);
+  assert.equal((html.match(/aria-current="true"/g) || []).length, 1);
+  assert.equal((html.match(/<h1>/g) || []).length, 1);
+});
+
+test("index.html: assets com a mesma versão, para o cache não misturar arquivos", () => {
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const versions = [...html.matchAll(/(?:href|src)="(?:styles\.css|universe\.js|quotes-core\.js|app\.js)\?v=(\d+)"/g)].map((m) => m[1]);
+  assert.equal(versions.length, 4);
+  assert.equal(new Set(versions).size, 1);
+});
+
+test("sections: grupos na ordem do maior q, linhas por q, sem grupo repetido", () => {
+  const secs = C.sections(inTab("graos"));
+  assert.deepEqual(Array.from(secs.map((s) => s.group)), ["Algodão", "Soja", "Milho", "Energia"]);
+  assert.deepEqual(Array.from(secs[1].rows.map((r) => r.show)), ["ZSX26", "ZSH27", "ZSH28"]);
+  const all = C.sections(win.YC_UNIVERSE);
+  assert.equal(new Set(all.map((s) => s.group)).size, all.length);
+  assert.equal(all.reduce((n, s) => n + s.rows.length, 0), win.YC_UNIVERSE.length);
+  assert.deepEqual(C.sections([]), []);
+});
+
+test("sections: Ações separa B3, EUA e índices; PRIO3 fica junto de PETR4", () => {
+  const secs = C.sections(inTab("acoes"));
+  assert.equal(secs[0].group, "Índices");
+  const energia = secs.find((s) => s.group === "B3 · Energia e mineração");
+  assert.deepEqual(Array.from(energia.rows.map((r) => r.show)), ["PETR4", "VALE3", "PRIO3"]);
+  for (const s of secs) assert.ok(s.group === "Índices" || /^(B3|EUA) · /.test(s.group), s.group);
+  assert.ok(secs.every((s) => s.rows.length >= 2), "grupo de uma linha só vira título solto");
+});
+
+test("matches: sem acento e sem caixa, vale para ticker, nome e grupo", () => {
+  const by = Object.fromEntries(win.YC_UNIVERSE.map((r) => [r.s, r]));
+  assert.equal(C.matches(by["CTZ26.NYB"], "algodao"), true);
+  assert.equal(C.matches(by["CTZ26.NYB"], "  ALGODÃO "), true);
+  assert.equal(C.matches(by["PETR4.SA"], "petr"), true);
+  assert.equal(C.matches(by["PETR4.SA"], "energia"), true);
+  assert.equal(C.matches(by["PETR4.SA"], "soja"), false);
+  const b3 = win.YC_UNIVERSE.filter((r) => C.matches(r, "b3"));
+  assert.ok(b3.length >= 11 && b3.every((r) => r.tabs.includes("acoes")));
+});
+
+test("esc: a busca digitada não vira HTML", () => {
+  assert.equal(C.esc("<img src=x onerror=alert(1)>"), "&#60;img src=x onerror=alert(1)&#62;");
+  assert.equal(C.esc("a&b\"c'd"), "a&#38;b&#34;c&#39;d");
+  assert.equal(C.esc(123), "123");
 });
