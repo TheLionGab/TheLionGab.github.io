@@ -11,7 +11,8 @@ Fontes, em ordem fixa por linha (`src` em `universe.js`):
   milho em ¢/bu, algodão em ¢/lb; cripto contra 24 h antes.
 - `awesome`: AwesomeAPI. Único de BTC/BRL e primeiro de dólar e euro
   (seguem o dia brasileiro; o Yahoo troca o dia às 23:00 UTC e zera a
-  variação à noite). Fallback de BTC/USD.
+  variação à noite). Fallback de BTC/USD. Se a AwesomeAPI falhar, dólar
+  e euro caem para o Yahoo, que à noite mostra variação perto de 0%.
 
 Regras:
 
