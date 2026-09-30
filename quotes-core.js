@@ -67,14 +67,28 @@
   }
 
   // Ordem de fontes fixa por linha: nunca depende de quem respondeu primeiro.
-  function pick(row, by) {
+  // Fonte que falhou (ok[src] === false) só serve se nenhuma seguinte da ordem
+  // tiver o símbolo; aí volta marcada como antiga por isOld.
+  function pick(row, by, ok) {
     const order = row.src || ["edge"];
+    let fallback = null;
     for (let i = 0; i < order.length; i++) {
       const q = by && by[order[i]] && by[order[i]][row.s];
-      if (q && Number.isFinite(q.price)) return Object.assign({ src: order[i] }, q);
+      if (!q || !Number.isFinite(q.price)) continue;
+      const item = Object.assign({ src: order[i] }, q);
+      if (ok && ok[order[i]] === false) { if (!fallback) fallback = item; continue; }
+      return item;
     }
-    return null;
+    return fallback;
   }
 
-  return { sanePct, fmtPrice, fmtPct, pctClass, stamp, fromEdge, fromAwesome, pick, MAX_DAILY_PCT };
+  // Linha esmaecida: contrato sem negócio recente, fonte fora do ar, ou ativo de
+  // 24 h (cripto) com cotação de mais de 1 h.
+  function isOld(row, quote, ok, now) {
+    if (!quote) return false;
+    if (quote.stale || (ok && ok[quote.src] === false)) return true;
+    return !!row.h24 && (now === undefined ? Date.now() : now) - quote.ts > 3600000;
+  }
+
+  return { sanePct, fmtPrice, fmtPct, pctClass, stamp, fromEdge, fromAwesome, pick, isOld, MAX_DAILY_PCT };
 });

@@ -85,6 +85,27 @@ test("pick: ordem fixa de fontes, sem depender de quem respondeu antes", () => {
   assert.equal(C.pick({ s: "AAPL" }, { edge: {} }), null);
 });
 
+test("pick: fonte que falhou não tapa uma seguinte que está boa; sem alternativa, volta marcada", () => {
+  const row = { s: "BRL=X", src: ["awesome", "edge"] };
+  const by = { awesome: { "BRL=X": { price: 5.2 } }, edge: { "BRL=X": { price: 5.2031 } } };
+  assert.equal(C.pick(row, by, { awesome: false, edge: true }).src, "edge");
+  assert.equal(C.pick(row, by, { awesome: true, edge: true }).src, "awesome");
+  const so = C.pick(row, { awesome: by.awesome, edge: {} }, { awesome: false, edge: true });
+  assert.equal(so.src, "awesome");
+  assert.equal(C.isOld(row, so, { awesome: false, edge: true }), true);
+});
+
+test("isOld: contrato parado, fonte fora do ar e cripto com cotação de mais de 1 h", () => {
+  const now = Date.UTC(2026, 8, 30, 1, 0);
+  assert.equal(C.isOld({}, null, {}), false);
+  assert.equal(C.isOld({}, { src: "edge", stale: true, ts: now }, { edge: true }, now), true);
+  assert.equal(C.isOld({}, { src: "edge", ts: now }, { edge: false }, now), true);
+  assert.equal(C.isOld({}, { src: "edge", ts: now }, { edge: true }, now), false);
+  assert.equal(C.isOld({ h24: true }, { src: "awesome", ts: now - 3600001 }, { awesome: true }, now), true);
+  assert.equal(C.isOld({ h24: true }, { src: "awesome", ts: now - 3599000 }, { awesome: true }, now), false);
+  assert.equal(C.isOld({}, { src: "edge", ts: now - 86400000 * 3 }, { edge: true }, now), false);
+});
+
 test("universo: símbolos únicos, abas válidas, fontes só edge/awesome", () => {
   const u = win.YC_UNIVERSE;
   assert.equal(new Set(u.map((r) => r.s)).size, u.length);
@@ -110,4 +131,11 @@ test("universo: câmbio segue o dia brasileiro (AwesomeAPI primeiro); soja e mil
   assert.deepEqual(Array.from(by["EURBRL=X"].src), ["awesome", "edge"]);
   for (const s of ["ZSX26.CBT", "ZSH27.CBT", "ZSH28.CBT", "ZCZ26.CBT"]) assert.equal(by[s].u, "¢/bu", s);
   for (const s of ["CTZ26.NYB", "CTZ27.NYB", "CTZ28.NYB"]) assert.equal(by[s].u, "¢/lb", s);
+});
+
+test("universo: Nasdaq Composite com rótulo certo e cripto marcada como 24 h", () => {
+  const by = Object.fromEntries(win.YC_UNIVERSE.map((r) => [r.s, r]));
+  assert.equal(by["^IXIC"].show, "IXIC");
+  assert.equal(by["BTC-BRL"].h24, true);
+  assert.equal(by["BTC-USD"].h24, true);
 });

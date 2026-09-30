@@ -14,12 +14,12 @@
 
   const render = () => {
     $("list").innerHTML = filtered().map((row) => {
-      const quote = C.pick(row, state.by);
+      const quote = C.pick(row, state.by, state.ok);
       const chg = quote ? quote.changePct : null;
       const price = quote ? C.fmtPrice(quote.price, row.dec) : "—";
       const when = quote ? C.stamp(quote.ts) : "";
-      // Fora do ar (fonte que falhou, dado guardado) ou contrato sem negócio recente: linha esmaecida.
-      const old = quote && (quote.stale || !state.ok[quote.src]) ? " old" : "";
+      // Fonte fora do ar (dado guardado), contrato sem negócio recente ou cripto com cotação velha: esmaecida.
+      const old = C.isOld(row, quote, state.ok) ? " old" : "";
       return "<article class=\"row" + old + "\"><div><span class=\"sym\">" + row.show + "</span><span class=\"nm\">" + row.n + " · " + row.u + "</span></div>" +
         "<div class=\"px\">" + price + (when ? "<small>" + when + "</small>" : "") + "</div>" +
         "<div class=\"chg " + C.pctClass(chg) + "\">" + C.fmtPct(chg) + "</div></article>";
@@ -29,7 +29,7 @@
   const pulse = (text) => { $("pulse").textContent = text; };
 
   const summary = () => {
-    const live = ALL.filter((row) => C.pick(row, state.by)).length;
+    const live = ALL.filter((row) => C.pick(row, state.by, state.ok)).length;
     const at = state.at ? C.stamp(state.at) : "";
     const srcs = [];
     if (state.ok.edge) srcs.push("Yahoo Finance");
@@ -60,9 +60,16 @@
     ]);
     // Fonte que respondeu substitui o mapa inteiro: símbolo que ela não trouxe
     // fica "—" em vez de guardar preço antigo. Fonte fora do ar mantém o último mapa.
-    if (edge.status === "fulfilled") state.by.edge = C.fromEdge(edge.value);
-    if (awesome.status === "fulfilled") state.by.awesome = C.fromAwesome(awesome.value);
-    state.ok = { edge: edge.status === "fulfilled", awesome: awesome.status === "fulfilled" };
+    // Resposta sem nenhuma cotação válida (API de pé, Yahoo fora) conta como falha.
+    const maps = {
+      edge: edge.status === "fulfilled" ? C.fromEdge(edge.value) : null,
+      awesome: awesome.status === "fulfilled" ? C.fromAwesome(awesome.value) : null
+    };
+    state.ok = {};
+    Object.keys(maps).forEach((src) => {
+      state.ok[src] = !!maps[src] && Object.keys(maps[src]).length > 0;
+      if (state.ok[src]) state.by[src] = maps[src];
+    });
     if (state.ok.edge || state.ok.awesome) {
       state.at = Date.now();
       try { localStorage.setItem(CACHE_KEY, JSON.stringify({ by: state.by, at: state.at })); } catch (e) {}

@@ -1,7 +1,7 @@
 window.YC_EDGE = "https://yc-finance-api.vercel.app";
 window.YC_UNIVERSE = [
-  { s: "BTC-BRL", show: "BTC", n: "Bitcoin / Real", tab: "fx", group: "Cripto", q: 110, dec: 0, u: "R$", src: ["awesome"] },
-  { s: "BTC-USD", show: "BTCUSD", n: "Bitcoin / Dólar", tab: "fx", group: "Cripto", q: 109, dec: 2, u: "US$", src: ["edge", "awesome"] },
+  { s: "BTC-BRL", show: "BTC", n: "Bitcoin / Real", tab: "fx", group: "Cripto", q: 110, dec: 0, u: "R$", h24: true, src: ["awesome"] },
+  { s: "BTC-USD", show: "BTCUSD", n: "Bitcoin / Dólar", tab: "fx", group: "Cripto", q: 109, dec: 2, u: "US$", h24: true, src: ["edge", "awesome"] },
   { s: "BRL=X", show: "USDBRL", n: "Dólar / Real", tab: "fx", group: "Câmbio", q: 100, dec: 4, u: "R$", src: ["awesome", "edge"] },
   { s: "EURBRL=X", show: "EURBRL", n: "Euro / Real", tab: "fx", group: "Câmbio", q: 90, dec: 4, u: "R$", src: ["awesome", "edge"] },
   { s: "GC=F", show: "OURO", n: "Ouro · futuro COMEX", tab: "fx", group: "Metal", q: 80, dec: 2, u: "US$/oz" },
@@ -26,7 +26,7 @@ window.YC_UNIVERSE = [
   { s: "SUZB3.SA", show: "SUZB3", n: "Suzano", tab: "b3", group: "Agro", q: 69, dec: 2, u: "R$" },
   { s: "^BVSP", show: "IBOV", n: "Ibovespa", tab: "global", group: "Índices", q: 108, dec: 2, u: "pts" },
   { s: "^GSPC", show: "SPX", n: "S&P 500", tab: "global", group: "Índices", q: 107, dec: 2, u: "pts" },
-  { s: "^IXIC", show: "NDX", n: "Nasdaq", tab: "global", group: "Índices", q: 106, dec: 2, u: "pts" },
+  { s: "^IXIC", show: "IXIC", n: "Nasdaq Composite", tab: "global", group: "Índices", q: 106, dec: 2, u: "pts" },
   { s: "^DJI", show: "DJI", n: "Dow Jones", tab: "global", group: "Índices", q: 105, dec: 2, u: "pts" },
   { s: "^GDAXI", show: "DAX", n: "DAX", tab: "global", group: "Índices", q: 104, dec: 2, u: "pts" },
   { s: "^N225", show: "NIKKEI", n: "Nikkei 225", tab: "global", group: "Índices", q: 103, dec: 2, u: "pts" },
