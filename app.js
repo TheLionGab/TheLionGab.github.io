@@ -29,6 +29,13 @@
   const render = () => {
     const q = state.q.trim();
     document.body.classList.toggle("searching", !!q);
+    // Com busca a lista é global: nenhuma aba está "atual", nem para leitor de tela.
+    document.querySelectorAll("[data-tab]").forEach((btn) => {
+      const on = btn.dataset.tab === state.tab;
+      btn.classList.toggle("on", on);
+      if (on && !q) btn.setAttribute("aria-current", "true");
+      else btn.removeAttribute("aria-current");
+    });
     const secs = C.sections(visible());
     $("list").innerHTML = secs.length
       ? secs.map((s) => "<section class=\"grp\"><h2>" + esc(s.group) + "</h2>" + s.rows.map(rowHtml).join("") + "</section>").join("")
@@ -52,12 +59,6 @@
     state.tab = tab;
     state.q = "";
     $("q").value = "";
-    document.querySelectorAll("[data-tab]").forEach((btn) => {
-      const on = btn.dataset.tab === tab;
-      btn.classList.toggle("on", on);
-      if (on) btn.setAttribute("aria-current", "true");
-      else btn.removeAttribute("aria-current");
-    });
     render();
     window.scrollTo(0, 0);
   };
