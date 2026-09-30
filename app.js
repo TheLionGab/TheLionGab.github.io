@@ -4,26 +4,35 @@
   const EDGE = window.YC_EDGE;
   const AWESOME = "https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL,BTC-BRL,BTC-USD";
   const CACHE_KEY = "ycf:quotes:v8";
-  const state = { tab: "agro", q: "", by: { edge: {}, awesome: {} }, at: 0, ok: { edge: false, awesome: false }, loading: false };
+  const state = { tab: "graos", q: "", by: { edge: {}, awesome: {} }, at: 0, ok: { edge: false, awesome: false }, loading: false };
   const $ = (id) => document.getElementById(id);
+  const esc = C.esc;
 
-  const filtered = () => {
-    const q = state.q.trim().toLowerCase();
-    return ALL.filter((row) => row.tab === state.tab && (!q || (row.show + " " + row.n).toLowerCase().includes(q))).sort((a, b) => b.q - a.q);
+  // Com busca, vale o universo inteiro (cada ativo uma vez); sem busca, a aba ativa.
+  const visible = () => {
+    const q = state.q.trim();
+    return ALL.filter((row) => (q ? C.matches(row, q) : C.inTab(row, state.tab)));
+  };
+
+  const rowHtml = (row) => {
+    const quote = C.pick(row, state.by, state.ok);
+    const chg = quote ? quote.changePct : null;
+    const price = quote ? C.fmtPrice(quote.price, row.dec) : "—";
+    const when = quote ? C.stamp(quote.ts) : "";
+    // Fonte fora do ar (dado guardado), contrato sem negócio recente ou cripto com cotação velha: esmaecida.
+    const old = C.isOld(row, quote, state.ok) ? " old" : "";
+    return "<article class=\"row" + old + "\"><div><span class=\"sym\">" + row.show + "</span><span class=\"nm\">" + row.n + " · " + row.u + "</span></div>" +
+      "<div class=\"px\">" + price + (when ? "<small>" + when + "</small>" : "") + "</div>" +
+      "<div class=\"chg " + C.pctClass(chg) + "\">" + C.fmtPct(chg) + "</div></article>";
   };
 
   const render = () => {
-    $("list").innerHTML = filtered().map((row) => {
-      const quote = C.pick(row, state.by, state.ok);
-      const chg = quote ? quote.changePct : null;
-      const price = quote ? C.fmtPrice(quote.price, row.dec) : "—";
-      const when = quote ? C.stamp(quote.ts) : "";
-      // Fonte fora do ar (dado guardado), contrato sem negócio recente ou cripto com cotação velha: esmaecida.
-      const old = C.isOld(row, quote, state.ok) ? " old" : "";
-      return "<article class=\"row" + old + "\"><div><span class=\"sym\">" + row.show + "</span><span class=\"nm\">" + row.n + " · " + row.u + "</span></div>" +
-        "<div class=\"px\">" + price + (when ? "<small>" + when + "</small>" : "") + "</div>" +
-        "<div class=\"chg " + C.pctClass(chg) + "\">" + C.fmtPct(chg) + "</div></article>";
-    }).join("");
+    const q = state.q.trim();
+    document.body.classList.toggle("searching", !!q);
+    const secs = C.sections(visible());
+    $("list").innerHTML = secs.length
+      ? secs.map((s) => "<section class=\"grp\"><h2>" + esc(s.group) + "</h2>" + s.rows.map(rowHtml).join("") + "</section>").join("")
+      : "<p class=\"empty\">Nenhum ativo para “" + esc(q) + "”.</p>";
   };
 
   const pulse = (text) => { $("pulse").textContent = text; };
@@ -38,10 +47,19 @@
     return live + " de " + ALL.length + " cotações · " + srcs.join(" + ") + " · " + at + (state.ok.edge ? "" : " · Yahoo indisponível");
   };
 
+  // Trocar de aba limpa a busca e volta ao topo: cada aba tem um tamanho.
   const setTab = (tab) => {
     state.tab = tab;
-    document.querySelectorAll("[data-tab]").forEach((btn) => btn.classList.toggle("on", btn.dataset.tab === tab));
+    state.q = "";
+    $("q").value = "";
+    document.querySelectorAll("[data-tab]").forEach((btn) => {
+      const on = btn.dataset.tab === tab;
+      btn.classList.toggle("on", on);
+      if (on) btn.setAttribute("aria-current", "true");
+      else btn.removeAttribute("aria-current");
+    });
     render();
+    window.scrollTo(0, 0);
   };
 
   async function getJson(url, timeout) {

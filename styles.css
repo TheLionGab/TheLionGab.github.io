@@ -1,16 +1,17 @@
 :root {
+  color-scheme: dark;
   --bg: #07080a;
   --line: rgba(201, 162, 39, .16);
   --paper: #f4ead3;
   --muted: #9a917f;
   --gold: #c9a227;
-  --up: #2f9e6b;
+  --up: #23845a;
   --down: #c4473a;
   --safe: env(safe-area-inset-bottom, 0px);
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--paper); font-family: Manrope, sans-serif; }
-body { padding-bottom: calc(76px + var(--safe)); }
+body { min-height: 100vh; min-height: 100dvh; padding-bottom: calc(84px + var(--safe)); }
 .splash {
   position: fixed; inset: 0; z-index: 20; background: #050506;
   display: grid; place-content: center; justify-items: center; text-align: center;
@@ -29,25 +30,24 @@ body:not(.splash-on) .splash { opacity: 0; visibility: hidden; pointer-events: n
 }
 .brand { display: flex; gap: 10px; align-items: center; }
 .brand img { width: 42px; height: 42px; object-fit: cover; border: 1px solid var(--line); }
-.brand strong { display: block; font-family: "Archivo Black", sans-serif; font-size: 13px; letter-spacing: .08em; }
-.brand span { color: var(--gold); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; }
+.brand h1 { margin: 0; font: 400 13px "Archivo Black", sans-serif; letter-spacing: .08em; }
+.brand span { display: block; color: var(--gold); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; }
 .icon-btn {
-  width: 40px; height: 40px; border: 1px solid var(--line);
+  width: 44px; height: 44px; border: 1px solid var(--line);
   background: transparent; color: var(--paper); border-radius: 12px; font-size: 18px;
 }
-.search { display: block; padding: 10px 16px 0; }
+.search { padding: 10px 16px 0; }
 .search input {
   width: 100%; border: 0; border-radius: 14px; background: #121418;
   color: var(--paper); padding: 12px 14px; font: 600 15px Manrope, sans-serif;
 }
-.tabs { display: flex; gap: 8px; padding: 12px 16px 0; overflow-x: auto; }
-.tabs button, .dock button {
-  border: 0; background: #121418; color: var(--muted);
-  padding: 9px 12px; border-radius: 999px; font: 800 12px Manrope, sans-serif;
-}
-.tabs .on, .dock .on { background: var(--gold); color: #1a140c; }
 .pulse { margin: 10px 16px 0; color: var(--muted); font-size: 12px; }
-.list { padding: 8px 12px 20px; }
+.list { padding: 0 12px 20px; }
+.grp h2 {
+  margin: 0; padding: 18px 8px 4px;
+  color: var(--gold); font: 800 11px Manrope, sans-serif; letter-spacing: .16em; text-transform: uppercase;
+}
+.grp:first-child h2 { padding-top: 12px; }
 .row {
   display: grid; grid-template-columns: 1fr auto auto;
   gap: 10px; align-items: center;
@@ -56,7 +56,7 @@ body:not(.splash-on) .splash { opacity: 0; visibility: hidden; pointer-events: n
 .sym { font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: 16px; }
 .nm { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
 .px { font-family: "IBM Plex Mono", monospace; font-size: 16px; text-align: right; }
-.px small { display: block; margin-top: 2px; color: var(--muted); font: 500 10px "IBM Plex Mono", monospace; }
+.px small { display: block; margin-top: 2px; color: var(--muted); font: 500 11px "IBM Plex Mono", monospace; }
 .chg {
   min-width: 78px; text-align: center; border-radius: 8px;
   padding: 8px 6px; font: 700 13px/1.1 "IBM Plex Mono", monospace; color: #fff;
@@ -65,13 +65,23 @@ body:not(.splash-on) .splash { opacity: 0; visibility: hidden; pointer-events: n
 .chg.up { background: var(--up); }
 .chg.down { background: var(--down); }
 .chg.flat { background: #2a2e33; color: var(--paper); }
+.empty { margin: 40px 16px; color: var(--muted); text-align: center; font-size: 14px; }
 .dock {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 6;
   display: grid; grid-template-columns: repeat(4, 1fr);
   gap: 8px; padding: 10px 12px calc(10px + var(--safe));
   background: rgba(7,8,10,.96); border-top: 1px solid var(--line);
 }
+.dock button {
+  min-height: 44px; border: 0; background: #121418; color: var(--muted);
+  padding: 9px 12px; border-radius: 999px; font: 800 12px Manrope, sans-serif;
+}
+.dock .on { background: var(--gold); color: #1a140c; }
+.searching .dock .on { background: #121418; color: var(--muted); }
 @media (min-width: 760px) {
   body { max-width: 430px; margin: 0 auto; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
   .dock { left: 50%; right: auto; width: 430px; transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .splash { transition: none; }
 }
