@@ -247,3 +247,18 @@ test("ícones e prévia: tamanhos declarados batem com o PNG real", () => {
   assert.match(html, /rel="manifest" href="manifest\.webmanifest"/);
   assert.match(html, /rel="apple-touch-icon" href="apple-touch-icon\.png"/);
 });
+
+const MES = { F: "Jan", G: "Fev", H: "Mar", J: "Abr", K: "Mai", M: "Jun", N: "Jul", Q: "Ago", U: "Set", V: "Out", X: "Nov", Z: "Dez" };
+const PRODUTO = { CT: "Algodão", ZS: "Soja", ZC: "Milho", ZW: "Trigo", ZM: "Farelo de soja", ZL: "Óleo de soja" };
+
+test("universo: contratos agrícolas com nome de produto e mês iguais ao símbolo, dec 2 e grupo do produto", () => {
+  const ag = win.YC_UNIVERSE.filter((r) => /\.(NYB|CBT)$/.test(r.s));
+  assert.equal(ag.length, 13);
+  for (const r of ag) {
+    const m = r.s.match(/^(CT|ZS|ZC|ZW|ZM|ZL)([FGHJKMNQUVXZ])(\d{2})\.(NYB|CBT)$/);
+    assert.ok(m, "símbolo fora do padrão: " + r.s);
+    assert.equal(r.n, PRODUTO[m[1]] + " " + MES[m[2]] + "/" + m[3], r.s);
+    assert.equal(r.group, PRODUTO[m[1]], r.s);
+    assert.equal(r.dec, 2, r.s);
+  }
+});
