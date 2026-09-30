@@ -121,6 +121,15 @@ test("universo: símbolos únicos, abas válidas, fontes só edge/awesome", () =
   assert.match(win.YC_EDGE, /^https:\/\/yc-finance-api\.vercel\.app$/);
 });
 
+test("universo: um rótulo de grupo pertence a um só conjunto de abas", () => {
+  const tabsOf = {};
+  for (const r of win.YC_UNIVERSE) {
+    const key = Array.from(r.tabs).sort().join("+");
+    assert.equal(tabsOf[r.group] || key, key, "grupo '" + r.group + "' aparece em abas diferentes (" + r.s + ")");
+    tabsOf[r.group] = key;
+  }
+});
+
 test("universo: contratos vencidos e linhas sem fonte própria ficaram de fora", () => {
   const syms = win.YC_UNIVERSE.map((r) => r.s);
   assert.ok(!syms.includes("ZSH26.CBT"));
