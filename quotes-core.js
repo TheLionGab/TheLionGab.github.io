@@ -19,16 +19,17 @@
     return value.toLocaleString("pt-BR", { minimumFractionDigits: dec, maximumFractionDigits: dec });
   }
 
+  // Arredonda a magnitude e só depois aplica o sinal: +0,005 e -0,005 tratam igual.
   function pctClass(chg) {
-    if (!Number.isFinite(chg) || round2(chg) === 0) return "flat";
+    if (!Number.isFinite(chg) || round2(Math.abs(chg)) === 0) return "flat";
     return chg > 0 ? "up" : "down";
   }
 
   function fmtPct(chg) {
     if (!Number.isFinite(chg)) return "—";
-    const r = round2(chg);
-    const body = Math.abs(r).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    return (r > 0 ? "+" : r < 0 ? "−" : "") + body + "%";
+    const m = round2(Math.abs(chg));
+    const body = m.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return (m === 0 ? "" : chg > 0 ? "+" : "−") + body + "%";
   }
 
   // Hoje: HH:MM; outro dia: dd/mm. Sempre no fuso de Brasília.
@@ -47,7 +48,7 @@
     ((payload && payload.quotes) || []).forEach((row) => {
       const price = num(row && row.value);
       if (!row || !row.symbol || !Number.isFinite(price) || price <= 0) return;
-      out[row.symbol] = { price: price, changePct: sanePct(row.delta), ts: num(row.ts) };
+      out[row.symbol] = { price: price, changePct: row.stale ? null : sanePct(row.delta), ts: num(row.ts), stale: !!row.stale };
     });
     return out;
   }

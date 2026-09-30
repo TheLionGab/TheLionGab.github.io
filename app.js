@@ -18,7 +18,9 @@
       const chg = quote ? quote.changePct : null;
       const price = quote ? C.fmtPrice(quote.price, row.dec) : "—";
       const when = quote ? C.stamp(quote.ts) : "";
-      return "<article class=\"row\"><div><span class=\"sym\">" + row.show + "</span><span class=\"nm\">" + row.n + " · " + row.u + "</span></div>" +
+      // Fora do ar (fonte que falhou, dado guardado) ou contrato sem negócio recente: linha esmaecida.
+      const old = quote && (quote.stale || !state.ok[quote.src]) ? " old" : "";
+      return "<article class=\"row" + old + "\"><div><span class=\"sym\">" + row.show + "</span><span class=\"nm\">" + row.n + " · " + row.u + "</span></div>" +
         "<div class=\"px\">" + price + (when ? "<small>" + when + "</small>" : "") + "</div>" +
         "<div class=\"chg " + C.pctClass(chg) + "\">" + C.fmtPct(chg) + "</div></article>";
     }).join("");

@@ -28,6 +28,9 @@ test("fmtPrice e fmtPct em pt-BR", () => {
   assert.equal(C.fmtPct(0.24), "+0,24%");
   assert.equal(C.fmtPct(-4.834), "−4,83%");
   assert.equal(C.fmtPct(-0.004), "0,00%");
+  assert.equal(C.fmtPct(0.005), "+0,01%");
+  assert.equal(C.fmtPct(-0.005), "−0,01%");
+  assert.equal(C.pctClass(-0.005), "down");
   assert.equal(C.fmtPct(null), "—");
   assert.equal(C.pctClass(0.004), "flat");
   assert.equal(C.pctClass(1), "up");
@@ -60,7 +63,7 @@ test("fromEdge: ignora linha com erro e delta nulo vira sem variação", () => {
   const q = C.fromEdge({
     quotes: [
       { symbol: "AAPL", value: 329.4, delta: -2.66, ts: 1790712000000 },
-      { symbol: "CTZ28.NYB", value: 77.09, delta: null, ts: 1 },
+      { symbol: "CTZ28.NYB", value: 77.09, delta: 1.17, stale: true, ts: 1 },
       { symbol: "ZSH26.CBT", value: null, delta: null, error: "falha" },
       { symbol: "X", value: 0, delta: 1 }
     ]
@@ -68,6 +71,8 @@ test("fromEdge: ignora linha com erro e delta nulo vira sem variação", () => {
   assert.deepEqual(Object.keys(q), ["AAPL", "CTZ28.NYB"]);
   assert.equal(q.AAPL.changePct, -2.66);
   assert.equal(q["CTZ28.NYB"].changePct, null);
+  assert.equal(q["CTZ28.NYB"].stale, true);
+  assert.equal(q.AAPL.stale, false);
 });
 
 test("pick: ordem fixa de fontes, sem depender de quem respondeu antes", () => {
@@ -97,4 +102,12 @@ test("universo: contratos vencidos e linhas sem fonte própria ficaram de fora",
   assert.ok(!syms.includes("ZSH26.CBT"));
   assert.ok(!syms.some((s) => s.startsWith("IMEA")));
   assert.ok(!syms.includes("CT=F") && !syms.includes("ZS=F") && !syms.includes("ZC=F"));
+});
+
+test("universo: câmbio segue o dia brasileiro (AwesomeAPI primeiro); soja e milho em ¢/bu", () => {
+  const by = Object.fromEntries(win.YC_UNIVERSE.map((r) => [r.s, r]));
+  assert.deepEqual(Array.from(by["BRL=X"].src), ["awesome", "edge"]);
+  assert.deepEqual(Array.from(by["EURBRL=X"].src), ["awesome", "edge"]);
+  for (const s of ["ZSX26.CBT", "ZSH27.CBT", "ZSH28.CBT", "ZCZ26.CBT"]) assert.equal(by[s].u, "¢/bu", s);
+  for (const s of ["CTZ26.NYB", "CTZ27.NYB", "CTZ28.NYB"]) assert.equal(by[s].u, "¢/lb", s);
 });

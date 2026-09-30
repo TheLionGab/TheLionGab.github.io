@@ -61,6 +61,7 @@ body:not(.splash-on) .splash { opacity: 0; visibility: hidden; pointer-events: n
   min-width: 78px; text-align: center; border-radius: 8px;
   padding: 8px 6px; font: 700 13px/1.1 "IBM Plex Mono", monospace; color: #fff;
 }
+.row.old .px, .row.old .chg { opacity: .5; }
 .chg.up { background: var(--up); }
 .chg.down { background: var(--down); }
 .chg.flat { background: #2a2e33; color: var(--paper); }
